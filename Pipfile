@@ -8,6 +8,7 @@ start = "python local-to-spotify.py"
 
 [packages]
 spotipy = "*"
+tinytag = "*"
 
 [dev-packages]
 
