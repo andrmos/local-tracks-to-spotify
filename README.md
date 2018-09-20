@@ -4,5 +4,8 @@ Script to add local tracks to a Spotify playlist if the track exists on Spotify.
 Create `config.ini` file with Spotify client ID and client secret.
 `config.ini.example` contains sample configuration.
 
-Install: `pipenv install`
-Run `pipenv run start`
+Run commands:
+```
+pipenv install
+pipenv run start
+```
