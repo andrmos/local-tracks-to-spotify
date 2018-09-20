@@ -18,7 +18,28 @@ def print_tracks(path):
         for entry in it:
             if entry.is_file():
                 tag = TinyTag.get(entry.path)
-                print(f'{tag.artist}: {tag.title}')
+                search_spotify(tag.artist, tag.title)
+
+def search_spotify(artist, track):
+    search_string = f'artist:{artist} track:{track}'
+    print(f'Searching for "{search_string}"')
+
+    results = spotify.search(q=search_string)
+    tracks = results['tracks']['items']
+
+    if len(tracks) == 0:
+        print('Found none')
+    else:
+        print(f'Found {len(tracks)} tracks')
+
+    for index, track in enumerate(tracks):
+        print(f'{index + 1}:')
+        id = track['id']
+        name = track['name']
+        artists = ', '.join([artist['name'] for artist in track['artists']])
+        print(f'Name: {name}\nArtists: {artists}\nID: {id}')
+
+    print('\n')
 
 
 if __name__ == '__main__':
