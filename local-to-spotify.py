@@ -31,12 +31,23 @@ class LocalToSpotify:
             tracks = []
             for entry in it:
                 if entry.is_file():
-                    tag = TinyTag.get(entry.path)
-                    artist = self.remove_parens(tag.artist)
-                    track_title = self.remove_parens(tag.title)
-                    track = { 'artist': artist, 'track_title': track_title }
-                    tracks.append(track)
+                    track = self.read_metadata(entry.path)
+                    if track is not None:
+                        tracks.append(track)
             return tracks
+
+    def read_metadata(self, file):
+        try:
+            tag = TinyTag.get(file)
+            artist = self.remove_parens(tag.artist)
+            track_title = self.remove_parens(tag.title)
+            # TODO: If tag not exists
+            return { 'artist': artist, 'track_title': track_title }
+
+        except Exception as error:
+            print(f'Parsing failed for file: {entry.name}')
+            print(error)
+
 
     def remove_parens(self, string):
         return string.strip().replace('(', '').replace(')', '').lower()
@@ -119,7 +130,7 @@ if __name__ == '__main__':
 
         if spotify_track is None:
             cleaned_track_title = localToSpotify.remove_general_words(track['track_title'])
-            # TODO Clean artists as well?
+            # TODO Clean artists as well. Remove &.
             spotify_track = localToSpotify.find_track(track['artist'], cleaned_track_title)
 
         if spotify_track is not None:
@@ -132,4 +143,4 @@ if __name__ == '__main__':
             track_title = track['track_title']
             print(f'{track_artist} - {track_title} was not found')
 
-    print(f'Found {successful}/{total} tracks')
+    print(f'Added {successful}/{total} tracks')
