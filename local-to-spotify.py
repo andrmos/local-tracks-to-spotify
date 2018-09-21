@@ -108,13 +108,9 @@ class LocalToSpotify:
 if __name__ == '__main__':
     path = './tracks'
     localToSpotify = LocalToSpotify('config.ini')
+    local_tracks = localToSpotify.get_tracks_in_folder(path)
 
-    #  local_tracks = localToSpotify.get_tracks_in_folder(path)
-    test = [{ 'artist': 'scott allen', 'track_title': localToSpotify.remove_parens('Soul Complex (original mix)') }]
-
-
-    #  for track in local_tracks:
-    for track in test:
+    for track in local_tracks:
         spotify_track = localToSpotify.find_track(track['artist'], track['track_title'])
 
         if spotify_track is None:
