@@ -33,50 +33,55 @@ class LocalToSpotify:
         print(f'Successfully read {config_file_name}.')
 
 
-def print_tracks(path):
-    with os.scandir(path) as it:
-        for entry in it:
-            if entry.is_file():
-                tag = TinyTag.get(entry.path)
-                search_spotify(tag.artist, tag.title)
+    def print_tracks(self, path):
+        with os.scandir(path) as it:
+            for entry in it:
+                if entry.is_file():
+                    tag = TinyTag.get(entry.path)
+                    search_spotify(tag.artist, tag.title)
 
-def search_spotify(artist, track):
-    search_string = f'artist:{artist} track:{track}'
-    print(f'Searching for "{search_string}"')
+    def search_spotify(self, artist, track):
+        search_string = f'artist:{artist} track:{track}'
+        print(f'Searching for "{search_string}"')
 
-    results = spotify.search(q=search_string)
-    tracks = results['tracks']['items']
+        results = spotify.search(q=search_string)
+        tracks = results['tracks']['items']
 
-    if len(tracks) == 0:
-        print('Found none')
-    else:
-        print(f'Found {len(tracks)} tracks')
+        if len(tracks) == 0:
+            print('Found none')
+        else:
+            print(f'Found {len(tracks)} tracks')
 
-    for index, track in enumerate(tracks):
-        print(f'{index + 1}:')
-        id = track['id']
-        name = track['name']
-        artists = ', '.join([artist['name'] for artist in track['artists']])
-        print(f'Name: {name}\nArtists: {artists}\nID: {id}')
+        for index, track in enumerate(tracks):
+            print(f'{index + 1}:')
+            id = track['id']
+            name = track['name']
+            artists = ', '.join([artist['name'] for artist in track['artists']])
+            print(f'Name: {name}\nArtists: {artists}\nID: {id}')
 
-    print('\n')
+        print('\n')
 
-def authorize(user_id, scope):
-    redirect_port = 43019
-    redirect_uri = f'http://127.0.0.1:{redirect_port}/redirect'
-    token = spotipy.util.prompt_for_user_token(user_id, scope, client_id = client_id, client_secret = client_secret, redirect_uri = redirect_uri)
+    def create_playlist(self):
+        playlist_name = 'Test playlist'
+        is_public = False
+        description = 'This is a test playlist'
+        spotify.user_playlist_create(user_id, playlist_name, public = is_public)
 
-    if token:
-        return spotipy.Spotify(auth=token)
+    def authorize(self, scope):
+        redirect_port = 43019
+        redirect_uri = f'http://127.0.0.1:{redirect_port}/redirect'
+        token = spotipy.util.prompt_for_user_token(user_id, scope, client_id = client_id, client_secret = client_secret, redirect_uri = redirect_uri)
 
-    else:
-        print(f'Can\'t get token for {user_id}')
-        sys.exit()
+        if token:
+            return spotipy.Spotify(auth=token)
+
+        else:
+            print(f'Can\'t get token for {user_id}')
+            sys.exit()
 
 
 if __name__ == '__main__':
     path = './tracks'
     scope = 'playlist-modify-public playlist-modify-private'
-    spotipy = authorize(scope)
-
     localToSpotify = LocalToSpotify('config.ini')
+    spotipy = localToSpotify.authorize(scope)
