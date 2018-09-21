@@ -1,3 +1,4 @@
 [SPOTIFY]
 ClientID = <Spotify client id>
 ClientSecret = <Spotify client secret>
+Username = <Spotify username>

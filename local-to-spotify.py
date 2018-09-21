@@ -11,6 +11,7 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 client_id = config['SPOTIFY']['ClientID']
 client_secret = config['SPOTIFY']['ClientSecret']
+user_id = config['SPOTIFY']['Username']
 
 def print_tracks(path):
     with os.scandir(path) as it:
