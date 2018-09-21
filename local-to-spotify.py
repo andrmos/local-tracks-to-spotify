@@ -1,6 +1,8 @@
+import sys
 import os
 import configparser
 import spotipy
+import spotipy.util
 from spotipy.oauth2 import SpotifyClientCredentials
 from tinytag import TinyTag
 
@@ -9,9 +11,6 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 client_id = config['SPOTIFY']['ClientID']
 client_secret = config['SPOTIFY']['ClientSecret']
-
-client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
-spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 def print_tracks(path):
     with os.scandir(path) as it:
@@ -41,7 +40,21 @@ def search_spotify(artist, track):
 
     print('\n')
 
+def authorize(user_id, scope):
+    redirect_port = 43019
+    redirect_uri = f'http://127.0.0.1:{redirect_port}/redirect'
+    token = spotipy.util.prompt_for_user_token(user_id, scope, client_id = client_id, client_secret = client_secret, redirect_uri = redirect_uri)
+
+    if token:
+        return spotipy.Spotify(auth=token)
+
+    else:
+        print(f'Can\'t get token for {user_id}')
+        sys.exit()
+
 
 if __name__ == '__main__':
     path = './tracks'
-    print_tracks(path)
+    user_id = 'coshr'
+    scope = 'playlist-modify-public playlist-modify-private'
+    spotipy = authorize(user_id, scope)
