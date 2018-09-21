@@ -87,12 +87,13 @@ class LocalToSpotify:
         track_ids = [track['id'] for track in tracks]
         try:
             if len(track_ids) == 0:
-                return
+                return False
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
 
             track_title = track['track_title']
             artist = track['artist']
             print(f'Successfully added {track_title}')
+            return True
 
         except SpotifyException as error:
             print(error)
@@ -110,6 +111,9 @@ if __name__ == '__main__':
     localToSpotify = LocalToSpotify('config.ini')
     local_tracks = localToSpotify.get_tracks_in_folder(path)
 
+    successful = 0
+    total = len(local_tracks)
+
     for track in local_tracks:
         spotify_track = localToSpotify.find_track(track['artist'], track['track_title'])
 
@@ -120,8 +124,12 @@ if __name__ == '__main__':
 
         if spotify_track is not None:
             playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
-            localToSpotify.add_tracks_to_playlist(playlist_id, [spotify_track])
+            success = localToSpotify.add_tracks_to_playlist(playlist_id, [spotify_track])
+            if success:
+                successful += 1
         else:
             track_artist = track['artist']
             track_title = track['track_title']
             print(f'{track_artist} - {track_title} was not found')
+
+    print(f'Found {successful}/{total} tracks')
