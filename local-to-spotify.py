@@ -26,16 +26,20 @@ class LocalToSpotify:
             print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
             sys.exit()
 
-
     def get_tracks_in_folder(self, path):
         with os.scandir(path) as it:
             tracks = []
             for entry in it:
                 if entry.is_file():
                     tag = TinyTag.get(entry.path)
-                    track = { 'artist': tag.artist, 'track_title': tag.title }
+                    artist = self.remove_parens(tag.artist)
+                    track_title = self.remove_parens(tag.title)
+                    track = { 'artist': artist, 'track_title': track_title }
                     tracks.append(track)
             return tracks
+
+    def remove_parens(self, string):
+        return string.strip().replace('(', '').replace(')', '').lower()
 
 
     def find_track(self, artist, track):
@@ -44,7 +48,6 @@ class LocalToSpotify:
         tracks = results['tracks']['items']
 
         if len(tracks) == 0:
-            print(f'{artist} - {track} was not found')
             return None
 
         # TODO: Fix, currently we just add first one.
@@ -87,21 +90,38 @@ class LocalToSpotify:
                 return
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
 
-            track_titles = ", ".join([track['track_title'] for track in tracks])
-            print(f'Successfully added {track_titles}')
+            track_title = track['track_title']
+            artist = track['artist']
+            print(f'Successfully added {track_title}')
 
         except SpotifyException as error:
             print(error)
             # TODO: If playlist not found, create it?
 
+    def remove_general_words(self, track_title):
+        words_to_remove = ['original', 'mix', 'feat', 'ft.', 'feat.', 'featuring', '&']
+        words = track_title.split(' ')
+        cleaned = [word for word in words if word not in words_to_remove]
+        return ' '.join(cleaned).strip()
+
 
 if __name__ == '__main__':
     path = './tracks'
     localToSpotify = LocalToSpotify('config.ini')
-
     local_tracks = localToSpotify.get_tracks_in_folder(path)
+
     for track in local_tracks:
         spotify_track = localToSpotify.find_track(track['artist'], track['track_title'])
+
+        if spotify_track is None:
+            cleaned_track_title = localToSpotify.remove_general_words(track['track_title'])
+            # TODO Clean artists as well?
+            spotify_track = localToSpotify.find_track(track['artist'], cleaned_track_title)
+
         if spotify_track is not None:
             playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
             localToSpotify.add_tracks_to_playlist(playlist_id, [spotify_track])
+        else:
+            track_artist = track['artist']
+            track_title = track['track_title']
+            print(f'{track_artist} - {track_title} was not found')
