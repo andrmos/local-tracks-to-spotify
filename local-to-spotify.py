@@ -7,12 +7,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from tinytag import TinyTag
 
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-client_id = config['SPOTIFY']['ClientID']
-client_secret = config['SPOTIFY']['ClientSecret']
-user_id = config['SPOTIFY']['Username']
-
 class LocalToSpotify:
     def __init__(self, config_file_name):
         self.read_config(config_file_name)
@@ -65,18 +59,18 @@ class LocalToSpotify:
         playlist_name = 'Test playlist'
         is_public = False
         description = 'This is a test playlist'
-        spotify.user_playlist_create(user_id, playlist_name, public = is_public)
+        spotify.user_playlist_create(self.user_id, playlist_name, public = is_public)
 
     def authorize(self, scope):
         redirect_port = 43019
         redirect_uri = f'http://127.0.0.1:{redirect_port}/redirect'
-        token = spotipy.util.prompt_for_user_token(user_id, scope, client_id = client_id, client_secret = client_secret, redirect_uri = redirect_uri)
+        token = spotipy.util.prompt_for_user_token(self.user_id, scope, client_id = self.client_id, client_secret = self.client_secret, redirect_uri = redirect_uri)
 
         if token:
             return spotipy.Spotify(auth=token)
 
         else:
-            print(f'Can\'t get token for {user_id}')
+            print(f'Can\'t get token for {self.user_id}')
             sys.exit()
 
 
