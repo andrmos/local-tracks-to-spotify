@@ -43,7 +43,7 @@ class LocalToSpotify:
 
 
     def find_track(self, artist, track):
-        search_string = f'artist:{artist} track:{track}'
+        search_string = f'{artist} {track}'
         results = self.spotify.search(q=search_string)
         tracks = results['tracks']['items']
 
