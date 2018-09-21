@@ -13,6 +13,26 @@ client_id = config['SPOTIFY']['ClientID']
 client_secret = config['SPOTIFY']['ClientSecret']
 user_id = config['SPOTIFY']['Username']
 
+class LocalToSpotify:
+    def __init__(self, config_file_name):
+        self.read_config(config_file_name)
+
+    def read_config(self, config_file_name):
+        config = configparser.ConfigParser()
+        config.read(config_file_name)
+
+        try:
+            self.client_id = config['SPOTIFY']['ClientID']
+            self.client_secret = config['SPOTIFY']['ClientSecret']
+            self.user_id = config['SPOTIFY']['Username']
+
+        except KeyError:
+            print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
+            sys.exit()
+
+        print(f'Successfully read {config_file_name}.')
+
+
 def print_tracks(path):
     with os.scandir(path) as it:
         for entry in it:
@@ -56,6 +76,7 @@ def authorize(user_id, scope):
 
 if __name__ == '__main__':
     path = './tracks'
-    user_id = 'coshr'
     scope = 'playlist-modify-public playlist-modify-private'
-    spotipy = authorize(user_id, scope)
+    spotipy = authorize(scope)
+
+    localToSpotify = LocalToSpotify('config.ini')
