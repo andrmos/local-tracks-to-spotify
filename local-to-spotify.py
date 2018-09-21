@@ -45,7 +45,7 @@ class LocalToSpotify:
             return { 'artist': artist, 'track_title': track_title }
 
         except Exception as error:
-            print(f'Parsing failed for file: {entry.name}')
+            print(f'Parsing failed for file: {file.name}')
             print(error)
 
 
