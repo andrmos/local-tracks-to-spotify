@@ -26,16 +26,20 @@ class LocalToSpotify:
             print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
             sys.exit()
 
-
     def get_tracks_in_folder(self, path):
         with os.scandir(path) as it:
             tracks = []
             for entry in it:
                 if entry.is_file():
                     tag = TinyTag.get(entry.path)
-                    track = { 'artist': tag.artist, 'track_title': tag.title }
+                    artist = self.remove_parens(tag.artist)
+                    track_title = self.remove_parens(tag.title)
+                    track = { 'artist': artist, 'track_title': track_title }
                     tracks.append(track)
             return tracks
+
+    def remove_parens(self, string):
+        return string.strip().replace('(', '').replace(')', '').lower()
 
 
     def find_track(self, artist, track):
