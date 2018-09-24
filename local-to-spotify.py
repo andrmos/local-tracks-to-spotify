@@ -101,9 +101,9 @@ class LocalToSpotify:
                 return False
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
 
-            track_title = track['track_title']
-            artist = track['artist']
-            print(f'Successfully added {track_title}')
+            track_title = tracks[0]['track_title']
+            artists = tracks[0]['artists']
+            print(f'Successfully added {artists} - {track_title}')
             return True
 
         except SpotifyException as error:
@@ -117,30 +117,35 @@ class LocalToSpotify:
         return ' '.join(cleaned).strip()
 
 
+    def add_tracks_to_spotify(self):
+        path = './tracks'
+        local_tracks = self.get_tracks_in_folder(path)
+
+        successful = 0
+        total = len(local_tracks)
+
+        for track in local_tracks:
+            spotify_track = self.find_track(track['artist'], track['track_title'])
+
+            if spotify_track is None:
+                cleaned_track_title = self.remove_general_words(track['track_title'])
+                #  TODO Clean artists as well. Remove &.
+                spotify_track = self.find_track(track['artist'], cleaned_track_title)
+
+            if spotify_track is not None:
+                playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
+                success = self.add_tracks_to_playlist(playlist_id, [spotify_track])
+                if success:
+                    successful += 1
+            else:
+                track_artist = track['artist']
+                track_title = track['track_title']
+                print(f'{track_artist} - {track_title} was not found')
+
+        print(f'Added {successful}/{total} tracks')
+
+
 if __name__ == '__main__':
     path = './tracks'
     localToSpotify = LocalToSpotify('config.ini')
-    local_tracks = localToSpotify.get_tracks_in_folder(path)
-
-    successful = 0
-    total = len(local_tracks)
-
-    for track in local_tracks:
-        spotify_track = localToSpotify.find_track(track['artist'], track['track_title'])
-
-        if spotify_track is None:
-            cleaned_track_title = localToSpotify.remove_general_words(track['track_title'])
-            # TODO Clean artists as well. Remove &.
-            spotify_track = localToSpotify.find_track(track['artist'], cleaned_track_title)
-
-        if spotify_track is not None:
-            playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
-            success = localToSpotify.add_tracks_to_playlist(playlist_id, [spotify_track])
-            if success:
-                successful += 1
-        else:
-            track_artist = track['artist']
-            track_title = track['track_title']
-            print(f'{track_artist} - {track_title} was not found')
-
-    print(f'Added {successful}/{total} tracks')
+    localToSpotify.add_tracks_to_spotify()
