@@ -7,24 +7,9 @@ from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
 from tinytag import TinyTag
 
-
-class LocalToSpotify:
-    def __init__(self, config_file_name):
-        self.read_config(config_file_name)
-        self.spotify = self.authorize()
-
-    def read_config(self, config_file_name):
-        config = configparser.ConfigParser()
-        config.read(config_file_name)
-
-        try:
-            self.client_id = config['SPOTIFY']['ClientID']
-            self.client_secret = config['SPOTIFY']['ClientSecret']
-            self.user_id = config['SPOTIFY']['Username']
-
-        except KeyError:
-            print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
-            sys.exit()
+class MixxxExportReader:
+    def __init__(self):
+        pass
 
     def get_tracks_in_folder(self, path):
         with os.scandir(path) as it:
@@ -39,10 +24,10 @@ class LocalToSpotify:
     def read_metadata(self, file):
         try:
             tag = TinyTag.get(file)
-            artist = self.remove_parens(tag.artist)
+            artists = self.remove_parens(tag.artist)
             track_title = self.remove_parens(tag.title)
             # TODO: If tag not exists
-            return { 'artist': artist, 'track_title': track_title }
+            return { 'artists': artists, 'track_title': track_title }
 
         except Exception as error:
             print(f'Parsing failed for file: {file}')
@@ -53,8 +38,30 @@ class LocalToSpotify:
         return string.strip().replace('(', '').replace(')', '').lower()
 
 
-    def find_track(self, artist, track):
-        search_string = f'{artist} {track}'
+class LocalToSpotify:
+    def __init__(self, config_file_name):
+        self.read_config(config_file_name)
+        self.spotify = self.authorize()
+        self.added_tracks = []
+        self.failed_tracks = []
+
+    def read_config(self, config_file_name):
+        config = configparser.ConfigParser()
+        config.read(config_file_name)
+
+        try:
+            self.client_id = config['SPOTIFY']['ClientID']
+            self.client_secret = config['SPOTIFY']['ClientSecret']
+            self.user_id = config['SPOTIFY']['Username']
+
+        except KeyError:
+            print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
+            sys.exit()
+
+
+
+    def find_track(self, artists, track):
+        search_string = f'{artists} {track}'
         results = self.spotify.search(q=search_string)
         tracks = results['tracks']['items']
 
@@ -100,10 +107,6 @@ class LocalToSpotify:
             if len(track_ids) == 0:
                 return False
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
-
-            track_title = tracks[0]['track_title']
-            artists = tracks[0]['artists']
-            print(f'Successfully added {artists} - {track_title}')
             return True
 
         except SpotifyException as error:
@@ -116,36 +119,51 @@ class LocalToSpotify:
         cleaned = [word for word in words if word not in words_to_remove]
         return ' '.join(cleaned).strip()
 
-
-    def add_tracks_to_spotify(self):
-        path = './tracks'
-        local_tracks = self.get_tracks_in_folder(path)
-
-        successful = 0
-        total = len(local_tracks)
-
-        for track in local_tracks:
-            spotify_track = self.find_track(track['artist'], track['track_title'])
+    def add_tracks_to_spotify(self, tracks):
+        for track in tracks:
+            spotify_track = self.find_track(track['artists'], track['track_title'])
 
             if spotify_track is None:
                 cleaned_track_title = self.remove_general_words(track['track_title'])
                 #  TODO Clean artists as well. Remove &.
-                spotify_track = self.find_track(track['artist'], cleaned_track_title)
+                spotify_track = self.find_track(track['artists'], cleaned_track_title)
 
             if spotify_track is not None:
                 playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
                 success = self.add_tracks_to_playlist(playlist_id, [spotify_track])
                 if success:
-                    successful += 1
+                    self.added_tracks.append(spotify_track)
+                else:
+                    self.failed_tracks.append(spotify_track)
             else:
-                track_artist = track['artist']
-                track_title = track['track_title']
-                print(f'{track_artist} - {track_title} was not found')
+                self.failed_tracks.append(track)
 
+        self.print_added()
+        self.print_failed()
+        self.print_summary()
+
+    def print_added(self):
+        for track in self.added_tracks:
+            track_title = track['track_title']
+            artists = track['artists']
+            print(f'Successfully added {artists} - {track_title}')
+
+    def print_failed(self):
+        for track in self.failed_tracks:
+            track_title = track['track_title']
+            artists = track['artists']
+            print(f'{artists} - {track_title} was not found')
+
+    def print_summary(self):
+        successful = len(self.added_tracks)
+        total = len(self.added_tracks) + len(self.failed_tracks)
         print(f'Added {successful}/{total} tracks')
 
 
 if __name__ == '__main__':
     path = './tracks'
+    mixxxExportReader = MixxxExportReader()
+    tracks_to_import = mixxxExportReader.get_tracks_in_folder(path)
+
     localToSpotify = LocalToSpotify('config.ini')
-    localToSpotify.add_tracks_to_spotify()
+    localToSpotify.add_tracks_to_spotify(tracks_to_import)
