@@ -58,7 +58,9 @@ class LocalToSpotify:
         spotify_tracks = results['tracks']['items']
         number_of_tracks = len(spotify_tracks)
 
+        print(f'Searching for "{search_string}"')
         if number_of_tracks == 0:
+            print('Not found')
             return None
 
         elif number_of_tracks == 1:
@@ -74,13 +76,21 @@ class LocalToSpotify:
         return Track(id, track_title, artists)
 
     def select_correct_track(self, spotify_tracks):
-        # TODO: Fix, currently we just add first one.
-        #       Figure out which one to add.
-        id = spotify_tracks[0]['id']
-        track_title = spotify_tracks[0]['name']
-        artists = ', '.join([artist['name'] for artist in spotify_tracks[0]['artists']])
+        print(f'Found {len(spotify_tracks)} tracks:')
+        for index, track in enumerate(spotify_tracks):
+            id = track['id']
+            track_title = track['name']
+            artists = ', '.join([artist['name'] for artist in track['artists']])
+            trackk = Track(id, track_title, artists)
+            print(f'{index + 1}: {trackk}')
+
+        input_text = 'Select correct track: '
+        selected_track_index = int(input(input_text)) - 1
+        id = spotify_tracks[selected_track_index]['id']
+        track_title = spotify_tracks[selected_track_index]['name']
+        raw_artists = spotify_tracks[selected_track_index]['artists']
+        artists = ', '.join([artist['name'] for artist in raw_artists])
         return Track(id, track_title, artists)
-        
 
     def create_playlist(self):
         playlist_name = 'Test playlist'
