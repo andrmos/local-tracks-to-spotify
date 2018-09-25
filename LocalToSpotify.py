@@ -84,7 +84,18 @@ class LocalToSpotify:
 
     def get_user_selection(self, spotify_tracks):
         input_text = 'Select correct track: '
-        selected_track_index = int(input(input_text)) - 1
+        valid = False
+        selected_track_index = -1
+        while not valid:
+            try:
+                selected_track_index = int(input(input_text)) - 1
+                if selected_track_index >= 0 and selected_track_index < len(spotify_tracks):
+                    valid = True
+                else:
+                    raise ValueError
+            except ValueError:
+                print('Invalid number')
+
         selected_track = self.convert_to_object(spotify_tracks[selected_track_index])
         return selected_track
 
