@@ -12,10 +12,21 @@ class Track:
         self.title = title
         self.artists = artists
 
+    def clean_track(self):
+        self.remove_general_artist_words()
+        self.remove_general_title_words()
+        return self
+
     def remove_general_title_words(self):
         words_to_remove = ['original', 'mix', 'feat', 'ft.', 'feat.', 'featuring', '&']
         words = self.title.split(' ')
         self.title = ' '.join([word for word in words if word not in words_to_remove]).strip()
+        return self
+
+    def remove_general_artist_words(self):
+        words_to_remove = ['original', 'mix', 'feat', 'ft.', 'feat.', 'featuring', '&']
+        words = self.artists.split(' ')
+        self.artists = ' '.join([word for word in words if word not in words_to_remove]).strip()
         return self
 
     def __str__(self):
@@ -111,8 +122,7 @@ class LocalToSpotify:
             spotify_track = self.find_track(track)
 
             if spotify_track is None:
-                cleaned_track = track.remove_general_title_words()
-                #  TODO Clean artists as well. Remove &.
+                cleaned_track = track.clean_track()
                 spotify_track = self.find_track(cleaned_track)
 
             if spotify_track is not None:
