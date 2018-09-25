@@ -142,15 +142,11 @@ class LocalToSpotify:
 
     def print_added(self):
         for track in self.added_tracks:
-            track_title = track.title
-            artists = track.artists
-            print(f'Successfully added {artists} - {track_title}')
+            print(f'Successfully added {track}')
 
     def print_failed(self):
         for track in self.failed_tracks:
-            track_title = track.title
-            artists = track.artists
-            print(f'{artists} - {track_title} was not found')
+            print(f'{track} was not found')
 
     def print_summary(self):
         successful = len(self.added_tracks)
