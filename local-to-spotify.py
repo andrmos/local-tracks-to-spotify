@@ -34,6 +34,20 @@ class LocalToSpotify:
         if len(tracks) == 0:
             return None
 
+        elif len(tracks) == 1:
+            return select_first_track(tracks)
+
+        else:
+            return select_correct_track(tracks)
+
+    def select_first_track(self, tracks):
+        id = tracks[0]['id']
+        track_title = tracks[0]['name']
+        artists = ', '.join([artist['name'] for artist in tracks[0]['artists']])
+        track = { 'id': id, 'track_title': track_title, 'artists': artists }
+        return track
+
+    def select_correct_track(self, tracks):
         # TODO: Fix, currently we just add first one.
         #       Figure out which one to add.
         id = tracks[0]['id']
@@ -41,7 +55,6 @@ class LocalToSpotify:
         artists = ', '.join([artist['name'] for artist in tracks[0]['artists']])
         track = { 'id': id, 'track_title': track_title, 'artists': artists }
         return track
-
 
     def create_playlist(self):
         playlist_name = 'Test playlist'
