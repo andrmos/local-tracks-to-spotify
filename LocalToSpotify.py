@@ -70,26 +70,23 @@ class LocalToSpotify:
             return self.select_correct_track(spotify_tracks)
 
     def select_first_track(self, spotify_tracks):
-        id = spotify_tracks[0]['id']
-        track_title = spotify_tracks[0]['name']
-        artists = ', '.join([artist['name'] for artist in spotify_tracks[0]['artists']])
-        return Track(id, track_title, artists)
+        return self.convert_to_object(spotify_tracks[0])
 
     def select_correct_track(self, spotify_tracks):
         print(f'Found {len(spotify_tracks)} tracks:')
-        for index, track in enumerate(spotify_tracks):
-            id = track['id']
-            track_title = track['name']
-            artists = ', '.join([artist['name'] for artist in track['artists']])
-            trackk = Track(id, track_title, artists)
-            print(f'{index + 1}: {trackk}')
+        for index, spotify_track in enumerate(spotify_tracks):
+            track = self.convert_to_object(spotify_track)
+            print(f'{index + 1}: {track}')
 
         input_text = 'Select correct track: '
         selected_track_index = int(input(input_text)) - 1
-        id = spotify_tracks[selected_track_index]['id']
-        track_title = spotify_tracks[selected_track_index]['name']
-        raw_artists = spotify_tracks[selected_track_index]['artists']
-        artists = ', '.join([artist['name'] for artist in raw_artists])
+        selected_track = self.convert_to_object(spotify_tracks[selected_track_index])
+        return selected_track
+
+    def convert_to_object(self, spotify_track):
+        id = spotify_track['id']
+        track_title = spotify_track['name']
+        artists = ', '.join([artist['name'] for artist in spotify_track['artists']])
         return Track(id, track_title, artists)
 
     def create_playlist(self):
