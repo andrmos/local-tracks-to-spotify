@@ -99,17 +99,29 @@ class LocalToSpotify:
             print(f'Can\'t get token for {self.user_id}')
             sys.exit()
 
+    def get_playlist_tracks(self, playlist_id):
+        result = self.spotify.user_playlist_tracks(self.user_id, playlist_id = playlist_id)
+        tracks = result['items']
+        while result['next']:
+            result = self.spotify.next(result)
+            tracks.extend(result['items'])
+        return tracks
+
+    def track_in_playlist(self, track, playlist_id):
+        tracks = self.get_playlist_tracks(playlist_id)
+        track_ids = [track['track']['id'] for track in tracks]
+        if track.id in track_ids:
+            return True
+        else:
+            return False
+
     # TODO: Playlist id in config or create new playlist.
-    def add_tracks_to_playlist(self, playlist_id, tracks):
-        '''
-        tracks: dict with fields: id, track_title, artists
-        '''
-        # TODO: If not exists in playlist already
-        track_ids = [track.id for track in tracks]
+    def add_tracks_to_playlist(self, playlist_id, track):
+        if self.track_in_playlist(track, playlist_id):
+            print(f'{track} already in playlist')
+            return False
         try:
-            if len(track_ids) == 0:
-                return False
-            self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
+            self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
             return True
 
         except SpotifyException as error:
@@ -126,7 +138,7 @@ class LocalToSpotify:
 
             if spotify_track is not None:
                 playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
-                success = self.add_tracks_to_playlist(playlist_id, [spotify_track])
+                success = self.add_tracks_to_playlist(playlist_id, spotify_track)
                 if success:
                     self.added_tracks.append(spotify_track)
                 else:
@@ -134,6 +146,7 @@ class LocalToSpotify:
             else:
                 self.failed_tracks.append(track)
 
+        # TODO: Clean up printing
         self.print_added()
         self.print_failed()
         self.print_summary()
