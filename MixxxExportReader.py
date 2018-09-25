@@ -1,4 +1,5 @@
 import os
+from LocalToSpotify import Track
 from tinytag import TinyTag
 
 class MixxxExportReader:
@@ -21,7 +22,7 @@ class MixxxExportReader:
             artists = self.remove_parens(tag.artist)
             track_title = self.remove_parens(tag.title)
             # TODO: If tag not exists
-            return { 'artists': artists, 'track_title': track_title }
+            return Track(-1, track_title, artists)
 
         except Exception as error:
             print(f'Parsing failed for file: {file}')

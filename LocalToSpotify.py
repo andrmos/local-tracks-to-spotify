@@ -4,7 +4,22 @@ import spotipy
 import spotipy.util
 from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
-from MixxxExportReader import MixxxExportReader
+from MixxxExportReader import *
+
+class Track:
+    def __init__(self, id, title, artists):
+        self.id = id
+        self.title = title
+        self.artists = artists
+
+    def remove_general_title_words(self):
+        words_to_remove = ['original', 'mix', 'feat', 'ft.', 'feat.', 'featuring', '&']
+        words = self.title.split(' ')
+        self.title = ' '.join([word for word in words if word not in words_to_remove]).strip()
+        return self
+
+    def __str__(self):
+        return f'{self.id}: {self.artists} - {self.title}'
 
 class LocalToSpotify:
     def __init__(self, config_file_name):
@@ -26,8 +41,8 @@ class LocalToSpotify:
             print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
             sys.exit()
 
-    def find_track(self, artists, track):
-        search_string = f'{artists} {track}'
+    def find_track(self, track):
+        search_string = f'{track.artists} {track.title}'
         results = self.spotify.search(q=search_string)
         tracks = results['tracks']['items']
 
@@ -35,17 +50,16 @@ class LocalToSpotify:
             return None
 
         elif len(tracks) == 1:
-            return select_first_track(tracks)
+            return self.select_first_track(tracks)
 
         else:
-            return select_correct_track(tracks)
+            return self.select_correct_track(tracks)
 
     def select_first_track(self, tracks):
         id = tracks[0]['id']
         track_title = tracks[0]['name']
         artists = ', '.join([artist['name'] for artist in tracks[0]['artists']])
-        track = { 'id': id, 'track_title': track_title, 'artists': artists }
-        return track
+        return Track(id, track_title, artists)
 
     def select_correct_track(self, tracks):
         # TODO: Fix, currently we just add first one.
@@ -53,8 +67,8 @@ class LocalToSpotify:
         id = tracks[0]['id']
         track_title = tracks[0]['name']
         artists = ', '.join([artist['name'] for artist in tracks[0]['artists']])
-        track = { 'id': id, 'track_title': track_title, 'artists': artists }
-        return track
+        return Track(id, track_title, artists)
+        
 
     def create_playlist(self):
         playlist_name = 'Test playlist'
@@ -81,7 +95,7 @@ class LocalToSpotify:
         tracks: dict with fields: id, track_title, artists
         '''
         # TODO: If not exists in playlist already
-        track_ids = [track['id'] for track in tracks]
+        track_ids = [track.id for track in tracks]
         try:
             if len(track_ids) == 0:
                 return False
@@ -92,20 +106,14 @@ class LocalToSpotify:
             print(error)
             # TODO: If playlist not found, create it?
 
-    def remove_general_words(self, track_title):
-        words_to_remove = ['original', 'mix', 'feat', 'ft.', 'feat.', 'featuring', '&']
-        words = track_title.split(' ')
-        cleaned = [word for word in words if word not in words_to_remove]
-        return ' '.join(cleaned).strip()
-
     def add_tracks_to_spotify(self, tracks):
         for track in tracks:
-            spotify_track = self.find_track(track['artists'], track['track_title'])
+            spotify_track = self.find_track(track)
 
             if spotify_track is None:
-                cleaned_track_title = self.remove_general_words(track['track_title'])
+                cleaned_track = track.remove_general_title_words()
                 #  TODO Clean artists as well. Remove &.
-                spotify_track = self.find_track(track['artists'], cleaned_track_title)
+                spotify_track = self.find_track(cleaned_track)
 
             if spotify_track is not None:
                 playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
@@ -123,14 +131,14 @@ class LocalToSpotify:
 
     def print_added(self):
         for track in self.added_tracks:
-            track_title = track['track_title']
-            artists = track['artists']
+            track_title = track.title
+            artists = track.artists
             print(f'Successfully added {artists} - {track_title}')
 
     def print_failed(self):
         for track in self.failed_tracks:
-            track_title = track['track_title']
-            artists = track['artists']
+            track_title = track.title
+            artists = track.artists
             print(f'{artists} - {track_title} was not found')
 
     def print_summary(self):
