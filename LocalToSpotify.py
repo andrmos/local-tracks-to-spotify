@@ -55,29 +55,30 @@ class LocalToSpotify:
     def find_track(self, track):
         search_string = f'{track.artists} {track.title}'
         results = self.spotify.search(q=search_string)
-        tracks = results['tracks']['items']
+        spotify_tracks = results['tracks']['items']
+        number_of_tracks = len(spotify_tracks)
 
-        if len(tracks) == 0:
+        if number_of_tracks == 0:
             return None
 
-        elif len(tracks) == 1:
-            return self.select_first_track(tracks)
+        elif number_of_tracks == 1:
+            return self.select_first_track(spotify_tracks)
 
         else:
-            return self.select_correct_track(tracks)
+            return self.select_correct_track(spotify_tracks)
 
-    def select_first_track(self, tracks):
-        id = tracks[0]['id']
-        track_title = tracks[0]['name']
-        artists = ', '.join([artist['name'] for artist in tracks[0]['artists']])
+    def select_first_track(self, spotify_tracks):
+        id = spotify_tracks[0]['id']
+        track_title = spotify_tracks[0]['name']
+        artists = ', '.join([artist['name'] for artist in spotify_tracks[0]['artists']])
         return Track(id, track_title, artists)
 
-    def select_correct_track(self, tracks):
+    def select_correct_track(self, spotify_tracks):
         # TODO: Fix, currently we just add first one.
         #       Figure out which one to add.
-        id = tracks[0]['id']
-        track_title = tracks[0]['name']
-        artists = ', '.join([artist['name'] for artist in tracks[0]['artists']])
+        id = spotify_tracks[0]['id']
+        track_title = spotify_tracks[0]['name']
+        artists = ', '.join([artist['name'] for artist in spotify_tracks[0]['artists']])
         return Track(id, track_title, artists)
         
 
