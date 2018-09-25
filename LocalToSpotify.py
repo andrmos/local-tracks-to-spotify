@@ -58,7 +58,9 @@ class LocalToSpotify:
         spotify_tracks = results['tracks']['items']
         number_of_tracks = len(spotify_tracks)
 
+        print(f'Searching for "{search_string}"')
         if number_of_tracks == 0:
+            print('Not found')
             return None
 
         elif number_of_tracks == 1:
@@ -68,19 +70,40 @@ class LocalToSpotify:
             return self.select_correct_track(spotify_tracks)
 
     def select_first_track(self, spotify_tracks):
-        id = spotify_tracks[0]['id']
-        track_title = spotify_tracks[0]['name']
-        artists = ', '.join([artist['name'] for artist in spotify_tracks[0]['artists']])
-        return Track(id, track_title, artists)
+        return self.convert_to_object(spotify_tracks[0])
 
     def select_correct_track(self, spotify_tracks):
-        # TODO: Fix, currently we just add first one.
-        #       Figure out which one to add.
-        id = spotify_tracks[0]['id']
-        track_title = spotify_tracks[0]['name']
-        artists = ', '.join([artist['name'] for artist in spotify_tracks[0]['artists']])
+        self.print_possible_tracks(spotify_tracks)
+        return self.get_user_selection(spotify_tracks)
+
+    def print_possible_tracks(self, spotify_tracks):
+        print(f'Found {len(spotify_tracks)} tracks:')
+        for index, spotify_track in enumerate(spotify_tracks):
+            track = self.convert_to_object(spotify_track)
+            print(f'{index + 1}: {track}')
+
+    def get_user_selection(self, spotify_tracks):
+        input_text = 'Select correct track: '
+        valid = False
+        selected_track_index = -1
+        while not valid:
+            try:
+                selected_track_index = int(input(input_text)) - 1
+                if selected_track_index >= 0 and selected_track_index < len(spotify_tracks):
+                    valid = True
+                else:
+                    raise ValueError
+            except ValueError:
+                print('Invalid number')
+
+        selected_track = self.convert_to_object(spotify_tracks[selected_track_index])
+        return selected_track
+
+    def convert_to_object(self, spotify_track):
+        id = spotify_track['id']
+        track_title = spotify_track['name']
+        artists = ', '.join([artist['name'] for artist in spotify_track['artists']])
         return Track(id, track_title, artists)
-        
 
     def create_playlist(self):
         playlist_name = 'Test playlist'
