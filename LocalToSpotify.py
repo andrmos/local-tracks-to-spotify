@@ -176,6 +176,12 @@ class LocalToSpotify:
         return playlist
 
     def add_tracks_to_spotify(self, tracks):
+        playlist = self.select_playlist()
+        if not self.playlist_exist(playlist):
+            # TODO: Create playlist.
+            print('Exiting...')
+            sys.exit()
+
         for track in tracks:
             spotify_track = self.find_track(track)
 
@@ -184,17 +190,11 @@ class LocalToSpotify:
                 spotify_track = self.find_track(cleaned_track)
 
             if spotify_track is not None:
-                playlist = self.select_playlist()
-                if self.playlist_exist(playlist):
-                    success = self.add_tracks_to_playlist(playlist.id, spotify_track)
-                    if success:
-                        self.added_tracks.append(spotify_track)
-                    else:
-                        self.failed_tracks.append(spotify_track)
+                success = self.add_tracks_to_playlist(playlist.id, spotify_track)
+                if success:
+                    self.added_tracks.append(spotify_track)
                 else:
-                    # TODO: Create playlist.
-                    print('Exiting...')
-                    sys.exit()
+                    self.failed_tracks.append(spotify_track)
 
             else:
                 self.failed_tracks.append(track)
