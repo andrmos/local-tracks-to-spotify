@@ -141,7 +141,6 @@ class LocalToSpotify:
             playlists.extend(result['items'])
         return playlists
 
-
     def playlist_exist(self, playlist_to_search):
         try:
             spotify_playlists = self.get_playlists()
@@ -159,8 +158,21 @@ class LocalToSpotify:
             print(e)
             return False
 
+    def search_for_playlists(self, name):
+        all_playlists = self.get_playlists()
+        return [playlist for playlist in all_playlists if name.lower() in playlist['name'].lower()]
+
     def select_playlist(self):
-        playlist = Playlist('6u8zVlsX9YTnaOfmdAaTNR', "jalla")
+        search_query = input('Search for playlist: ')
+        matched_playlists = self.search_for_playlists(search_query)
+        for index, matched in enumerate(matched_playlists):
+            name = matched['name']
+            print(f'{index + 1}: {name}')
+
+        # TODO: Allow searching multiple times
+        # TODO: Validation
+        selected_index = int(input('Select playlist: ')) - 1
+        playlist = Playlist(matched_playlists[selected_index]['id'], matched_playlists[selected_index]['name'])
         return playlist
 
     def add_tracks_to_spotify(self, tracks):
