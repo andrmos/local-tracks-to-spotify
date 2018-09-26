@@ -159,6 +159,10 @@ class LocalToSpotify:
             print(e)
             return False
 
+    def select_playlist(self):
+        playlist = Playlist('6u8zVlsX9YTnaOfmdAaTNR', "jalla")
+        return playlist
+
     def add_tracks_to_spotify(self, tracks):
         for track in tracks:
             spotify_track = self.find_track(track)
@@ -168,8 +172,7 @@ class LocalToSpotify:
                 spotify_track = self.find_track(cleaned_track)
 
             if spotify_track is not None:
-                # TODO: Select playlist
-                playlist = Playlist('6u8zVlsX9YTnaOfmdAaTNR', "jalla")
+                playlist = self.select_playlist()
                 if self.playlist_exist(playlist):
                     success = self.add_tracks_to_playlist(playlist.id, spotify_track)
                     if success:
