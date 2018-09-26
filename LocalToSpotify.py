@@ -13,6 +13,7 @@ class LocalToSpotify:
         self.read_config(config_file_name)
         self.spotify = self.authorize()
         self.added_tracks = []
+        self.tracks_already_in_playlist = []
         self.failed_tracks = []
 
     def read_config(self, config_file_name):
@@ -25,7 +26,8 @@ class LocalToSpotify:
             self.user_id = config['SPOTIFY']['Username']
 
         except KeyError:
-            print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
+            print(f'Error reading {config_file_name}.')
+            print('Refer to config.ini.example for correct configuration.')
             sys.exit()
 
     def find_track(self, track):
@@ -34,15 +36,13 @@ class LocalToSpotify:
         spotify_tracks = results['tracks']['items']
         number_of_tracks = len(spotify_tracks)
 
-        print(f'Searching for "{search_string}"')
         if number_of_tracks == 0:
-            print('Not found')
             return None
-
         elif number_of_tracks == 1:
             return self.select_first_track(spotify_tracks)
-
         else:
+            print(f'Found {number_of_tracks} tracks for "{track}".')
+            print('Select correct track:')
             return self.select_correct_track(spotify_tracks)
 
     def select_first_track(self, spotify_tracks):
@@ -53,7 +53,6 @@ class LocalToSpotify:
         return self.get_track_selection(spotify_tracks)
 
     def print_possible_tracks(self, spotify_tracks):
-        print(f'Found {len(spotify_tracks)} tracks:')
         for index, spotify_track in enumerate(spotify_tracks):
             track = self.convert_to_object(spotify_track)
             print(f'{index + 1}: {track}')
@@ -95,17 +94,20 @@ class LocalToSpotify:
             sys.exit()
 
     def get_playlist_tracks(self, playlist_id):
-        result = self.spotify.user_playlist_tracks(self.user_id, playlist_id = playlist_id)
-        tracks = result['items']
-        while result['next']:
-            result = self.spotify.next(result)
-            tracks.extend(result['items'])
-        return tracks
+        try:
+            return self.playlist_tracks
+        except AttributeError:
+            result = self.spotify.user_playlist_tracks(self.user_id, playlist_id = playlist_id)
+            tracks = result['items']
+            while result['next']:
+                result = self.spotify.next(result)
+                tracks.extend(result['items'])
+            return [self.convert_to_object(track['track']) for track in tracks]
 
     def track_in_playlist(self, track, playlist_id):
         try:
             tracks = self.get_playlist_tracks(playlist_id)
-            track_ids = [track['track']['id'] for track in tracks]
+            track_ids = [track.id for track in tracks]
             if track.id in track_ids:
                 return True
             else:
@@ -117,15 +119,20 @@ class LocalToSpotify:
 
     def add_tracks_to_playlist(self, playlist_id, track):
         if self.track_in_playlist(track, playlist_id):
-            print(f'{track} already in playlist')
+            self.tracks_already_in_playlist.append(track)
             return False
         try:
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
+            self.added_tracks.append(track)
+            self.playlist_tracks.append(track)
             return True
 
         except SpotifyException as e:
             print(e)
+            # Reason: Couldn't add to playlist
+            self.failed_tracks.append(spotify_track)
             return False
+
 
     def get_playlists(self):
         result = self.spotify.user_playlists(self.user_id)
@@ -146,10 +153,8 @@ class LocalToSpotify:
             playlist_ids = [playlist.id for playlist in playlists]
 
             if playlist_to_search.id in playlist_ids:
-                print(f'Playlist "{playlist_to_search}" found')
                 return True
             else:
-                print(f'Playlist "{playlist_to_search}" not found')
                 return False
 
         except SpotifyException as e:
@@ -214,53 +219,75 @@ class LocalToSpotify:
         print('2: Create new playlist')
         user_reponse = input('Select your option: ')
         should_create_playlist = user_reponse == '2'
+        playlist = None
         if should_create_playlist:
-            return self.create_playlist()
+            playlist = self.create_playlist()
         else:
-            return self.select_playlist()
+            playlist = self.select_playlist()
 
-
-    def add_tracks_to_spotify(self, tracks):
-        playlist = self.select_playlist_or_create_new()
         if not self.playlist_exist(playlist):
             print(f'Error! Playlist "{playlist}" does not exist.')
             print('Exiting...')
             sys.exit()
+        else:
+            print(f'Adding to playlist: {playlist}')
+            return playlist
 
-        for track in tracks:
+    def clean_track_metadata_and_find_again(self, track):
+        cleaned_track = track.clean_track()
+        return self.find_track(cleaned_track)
+
+    def store_playlist_tracks(self, playlist_tracks):
+        tracks = []
+        for track in playlist_tracks:
+            tracks.append(track)
+        self.playlist_tracks = tracks
+
+    def add_tracks_to_spotify(self, tracks_to_add):
+        playlist = self.select_playlist_or_create_new()
+        playlist_tracks = self.get_playlist_tracks(playlist.id)
+        self.store_playlist_tracks(playlist_tracks)
+
+        for track in tracks_to_add:
             spotify_track = self.find_track(track)
-
-            if spotify_track is None:
-                cleaned_track = track.clean_track()
-                spotify_track = self.find_track(cleaned_track)
+            not_found = spotify_track is None
+            if not_found:
+                spotify_track = self.clean_track_metadata_and_find_again(track)
 
             if spotify_track is not None:
                 success = self.add_tracks_to_playlist(playlist.id, spotify_track)
-                if success:
-                    self.added_tracks.append(spotify_track)
-                else:
-                    self.failed_tracks.append(spotify_track)
 
             else:
+                # Reason: Not found
                 self.failed_tracks.append(track)
 
-        # TODO: Clean up printing
-        self.print_added()
-        self.print_failed()
         self.print_summary()
+
+    def print_already_in_playlist(self):
+        for track in self.tracks_already_in_playlist:
+            print(f'Already in playlist: {track}')
 
     def print_added(self):
         for track in self.added_tracks:
-            print(f'Successfully added {track}')
+            print(f'Successfully added: {track}')
 
     def print_failed(self):
         for track in self.failed_tracks:
-            print(f'{track} was not found')
+            print(f'Did not add: {track}')
+
+    def print_statistics(self):
+        successful = len(self.added_tracks)
+        total = len(self.added_tracks) + len(self.tracks_already_in_playlist) + len(self.failed_tracks)
+        print(f'Added {successful}/{total} tracks.')
 
     def print_summary(self):
-        successful = len(self.added_tracks)
-        total = len(self.added_tracks) + len(self.failed_tracks)
-        print(f'Added {successful}/{total} tracks')
+        print()
+        print('Summary:')
+        self.print_already_in_playlist()
+        self.print_added()
+        self.print_failed()
+        print()
+        self.print_statistics()
 
 
 if __name__ == '__main__':

@@ -22,5 +22,5 @@ class Track:
         return self
 
     def __str__(self):
-        return f'{self.id}: {self.artists} - {self.title}'
+        return f'{self.artists} - {self.title}'
 
