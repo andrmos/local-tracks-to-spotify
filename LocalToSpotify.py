@@ -26,7 +26,8 @@ class LocalToSpotify:
             self.user_id = config['SPOTIFY']['Username']
 
         except KeyError:
-            print(f'Error reading {config_file_name}.\nRefer to config.ini.example for correct configuration.')
+            print(f'Error reading {config_file_name}.')
+            print('Refer to config.ini.example for correct configuration.')
             sys.exit()
 
     def find_track(self, track):
@@ -35,15 +36,13 @@ class LocalToSpotify:
         spotify_tracks = results['tracks']['items']
         number_of_tracks = len(spotify_tracks)
 
-        print(f'Searching for "{search_string}"')
         if number_of_tracks == 0:
-            print('Not found')
             return None
-
         elif number_of_tracks == 1:
             return self.select_first_track(spotify_tracks)
-
         else:
+            print(f'Found {number_of_tracks} tracks for "{track}".')
+            print('Select correct track:')
             return self.select_correct_track(spotify_tracks)
 
     def select_first_track(self, spotify_tracks):
@@ -54,7 +53,6 @@ class LocalToSpotify:
         return self.get_track_selection(spotify_tracks)
 
     def print_possible_tracks(self, spotify_tracks):
-        print(f'Found {len(spotify_tracks)} tracks:')
         for index, spotify_track in enumerate(spotify_tracks):
             track = self.convert_to_object(spotify_track)
             print(f'{index + 1}: {track}')
@@ -151,10 +149,8 @@ class LocalToSpotify:
             playlist_ids = [playlist.id for playlist in playlists]
 
             if playlist_to_search.id in playlist_ids:
-                print(f'Playlist "{playlist_to_search}" found')
                 return True
             else:
-                print(f'Playlist "{playlist_to_search}" not found')
                 return False
 
         except SpotifyException as e:
@@ -229,7 +225,9 @@ class LocalToSpotify:
             print(f'Error! Playlist "{playlist}" does not exist.')
             print('Exiting...')
             sys.exit()
-        return playlist
+        else:
+            print(f'Adding to playlist: {playlist}')
+            return playlist
 
     def clean_track_metadata_and_find_again(self, track):
         cleaned_track = track.clean_track()
@@ -268,12 +266,15 @@ class LocalToSpotify:
     def print_statistics(self):
         successful = len(self.added_tracks)
         total = len(self.added_tracks) + len(self.tracks_already_in_playlist) + len(self.failed_tracks)
-        print(f'Added {successful}/{total} tracks')
+        print(f'Added {successful}/{total} tracks.')
 
     def print_summary(self):
+        print()
+        print('Summary:')
         self.print_already_in_playlist()
         self.print_added()
         self.print_failed()
+        print()
         self.print_statistics()
 
 
