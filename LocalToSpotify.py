@@ -94,17 +94,20 @@ class LocalToSpotify:
             sys.exit()
 
     def get_playlist_tracks(self, playlist_id):
-        result = self.spotify.user_playlist_tracks(self.user_id, playlist_id = playlist_id)
-        tracks = result['items']
-        while result['next']:
-            result = self.spotify.next(result)
-            tracks.extend(result['items'])
-        return tracks
+        try:
+            return self.playlist_tracks
+        except AttributeError:
+            result = self.spotify.user_playlist_tracks(self.user_id, playlist_id = playlist_id)
+            tracks = result['items']
+            while result['next']:
+                result = self.spotify.next(result)
+                tracks.extend(result['items'])
+            return [self.convert_to_object(track['track']) for track in tracks]
 
     def track_in_playlist(self, track, playlist_id):
         try:
             tracks = self.get_playlist_tracks(playlist_id)
-            track_ids = [track['track']['id'] for track in tracks]
+            track_ids = [track.id for track in tracks]
             if track.id in track_ids:
                 return True
             else:
@@ -121,6 +124,7 @@ class LocalToSpotify:
         try:
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
             self.added_tracks.append(track)
+            self.playlist_tracks.append(track)
             return True
 
         except SpotifyException as e:
@@ -233,8 +237,16 @@ class LocalToSpotify:
         cleaned_track = track.clean_track()
         return self.find_track(cleaned_track)
 
+    def store_playlist_tracks(self, playlist_tracks):
+        tracks = []
+        for track in playlist_tracks:
+            tracks.append(track)
+        self.playlist_tracks = tracks
+
     def add_tracks_to_spotify(self, tracks_to_add):
         playlist = self.select_playlist_or_create_new()
+        playlist_tracks = self.get_playlist_tracks(playlist.id)
+        self.store_playlist_tracks(playlist_tracks)
 
         for track in tracks_to_add:
             spotify_track = self.find_track(track)
