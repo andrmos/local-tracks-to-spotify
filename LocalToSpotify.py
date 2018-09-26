@@ -6,14 +6,7 @@ from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
 from MixxxExportReader import *
 from Track import *
-
-class Playlist:
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-
-    def __str__(self):
-        print(f'{self.id}: {self.name}')
+from Playlist import *
 
 class LocalToSpotify:
     def __init__(self, config_file_name):
