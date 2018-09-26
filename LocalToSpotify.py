@@ -135,13 +135,18 @@ class LocalToSpotify:
 
 
     def get_playlists(self):
-        result = self.spotify.user_playlists(self.user_id)
-        playlists = result['items']
-        while result['next']:
-            result = self.spotify.next(result)
-            playlists.extend(result['items'])
-        # Currently not possible to add to other playlist than your own.
-        return self.only_own_playlists(playlists)
+        try:
+            return self.playlists
+        except AttributeError:
+            result = self.spotify.user_playlists(self.user_id)
+            playlists = result['items']
+            while result['next']:
+                result = self.spotify.next(result)
+                playlists.extend(result['items'])
+            # Currently not possible to add to other playlist than your own.
+            # TODO: Transform to playlist objects. In create as well.
+            self.playlists = self.only_own_playlists(playlists)
+            return self.playlists
 
     def only_own_playlists(self, playlists):
         return [playlist for playlist in playlists if playlist['owner']['id'] == self.user_id]
@@ -212,6 +217,8 @@ class LocalToSpotify:
         is_public = False
         result = self.spotify.user_playlist_create(self.user_id, playlist_name, public = is_public)
         created_playlist = Playlist(result['id'], result['name'])
+        # TODO: Store playlist object instead
+        self.playlists.append(result)
         return created_playlist
 
     def select_playlist_or_create_new(self):
