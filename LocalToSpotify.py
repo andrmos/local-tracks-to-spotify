@@ -12,6 +12,9 @@ class Playlist:
         self.id = id
         self.name = name
 
+    def __str__(self):
+        print(f'{self.id}: {self.name}')
+
 class LocalToSpotify:
     def __init__(self, config_file_name):
         self.read_config(config_file_name)
