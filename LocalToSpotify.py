@@ -50,7 +50,7 @@ class LocalToSpotify:
 
     def select_correct_track(self, spotify_tracks):
         self.print_possible_tracks(spotify_tracks)
-        return self.get_user_selection(spotify_tracks)
+        return self.get_track_selection(spotify_tracks)
 
     def print_possible_tracks(self, spotify_tracks):
         print(f'Found {len(spotify_tracks)} tracks:')
@@ -58,7 +58,7 @@ class LocalToSpotify:
             track = self.convert_to_object(spotify_track)
             print(f'{index + 1}: {track}')
 
-    def get_user_selection(self, spotify_tracks):
+    def get_track_selection(self, spotify_tracks):
         input_text = 'Select correct track: '
         valid = False
         selected_track_index = -1
@@ -180,6 +180,7 @@ class LocalToSpotify:
 
             print('s: search again')
             user_input = input('Select playlist: ')
+
             if user_input == 's':
                 search_query = input('Search for playlist: ')
                 matched_playlists = self.search_for_playlists(search_query)
@@ -190,8 +191,8 @@ class LocalToSpotify:
                 except ValueError:
                     valid = False
 
-        playlist = Playlist(matched_playlists[selected_index]['id'], matched_playlists[selected_index]['name'])
-        return playlist
+        selected_playlist = Playlist(matched_playlists[selected_index]['id'], matched_playlists[selected_index]['name'])
+        return selected_playlist
 
     def add_tracks_to_spotify(self, tracks):
         playlist = self.select_playlist()
