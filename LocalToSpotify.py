@@ -139,7 +139,11 @@ class LocalToSpotify:
         while result['next']:
             result = self.spotify.next(result)
             playlists.extend(result['items'])
-        return playlists
+        # Currently not possible to add to other playlist than your own.
+        return self.only_own_playlists(playlists)
+
+    def only_own_playlists(self, playlists):
+        return [playlist for playlist in playlists if playlist['owner']['id'] == self.user_id]
 
     def playlist_exist(self, playlist_to_search):
         try:
