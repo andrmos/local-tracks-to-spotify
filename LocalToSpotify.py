@@ -108,11 +108,16 @@ class LocalToSpotify:
         return tracks
 
     def track_in_playlist(self, track, playlist_id):
-        tracks = self.get_playlist_tracks(playlist_id)
-        track_ids = [track['track']['id'] for track in tracks]
-        if track.id in track_ids:
-            return True
-        else:
+        try:
+            tracks = self.get_playlist_tracks(playlist_id)
+            track_ids = [track['track']['id'] for track in tracks]
+            if track.id in track_ids:
+                return True
+            else:
+                return False
+        except SpotifyException as e:
+            if e.http_status == 404:
+                print(f'Playlist with id: {playlist_id} was not found')
             return False
 
     # TODO: Playlist id in config or create new playlist.
