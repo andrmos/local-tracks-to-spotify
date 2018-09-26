@@ -81,12 +81,6 @@ class LocalToSpotify:
         artists = ', '.join([artist['name'] for artist in spotify_track['artists']])
         return Track(id, track_title, artists)
 
-    def create_playlist(self):
-        playlist_name = 'Test playlist'
-        is_public = False
-        description = 'This is a test playlist'
-        self.spotify.user_playlist_create(self.user_id, playlist_name, public = is_public)
-
     def authorize(self):
         scope = 'playlist-modify-public playlist-modify-private playlist-read-private'
         redirect_port = 43019
@@ -162,6 +156,9 @@ class LocalToSpotify:
             print(e)
             return False
 
+        except Exception as e:
+            return False
+
     def search_for_playlists(self):
         search_query = input('Search for playlist: ')
         all_playlists = self.get_playlists()
@@ -205,10 +202,28 @@ class LocalToSpotify:
     def validate_playlist_selection(self, selection, min, max):
         return selection >= min and selection < max
 
+    def create_playlist(self):
+        playlist_name = input('Enter playlist name: ')
+        is_public = False
+        result = self.spotify.user_playlist_create(self.user_id, playlist_name, public = is_public)
+        created_playlist = Playlist(result['id'], result['name'])
+        return created_playlist
+
+    def select_playlist_or_create_new(self):
+        print('1: Select existing playlist')
+        print('2: Create new playlist')
+        user_reponse = input('Select your option: ')
+        should_create_playlist = user_reponse == '2'
+        if should_create_playlist:
+            return self.create_playlist()
+        else:
+            return self.select_playlist()
+
+
     def add_tracks_to_spotify(self, tracks):
-        playlist = self.select_playlist()
+        playlist = self.select_playlist_or_create_new()
         if not self.playlist_exist(playlist):
-            # TODO: Create playlist.
+            print(f'Error! Playlist "{playlist}" does not exist.')
             print('Exiting...')
             sys.exit()
 
