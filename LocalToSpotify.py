@@ -214,18 +214,20 @@ class LocalToSpotify:
         print('2: Create new playlist')
         user_reponse = input('Select your option: ')
         should_create_playlist = user_reponse == '2'
+        playlist = None
         if should_create_playlist:
-            return self.create_playlist()
+            playlist = self.create_playlist()
         else:
-            return self.select_playlist()
+            playlist = self.select_playlist()
 
-
-    def add_tracks_to_spotify(self, tracks):
-        playlist = self.select_playlist_or_create_new()
         if not self.playlist_exist(playlist):
             print(f'Error! Playlist "{playlist}" does not exist.')
             print('Exiting...')
             sys.exit()
+        return playlist
+
+    def add_tracks_to_spotify(self, tracks):
+        playlist = self.select_playlist_or_create_new()
 
         for track in tracks:
             spotify_track = self.find_track(track)
