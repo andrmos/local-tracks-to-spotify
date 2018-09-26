@@ -162,37 +162,48 @@ class LocalToSpotify:
             print(e)
             return False
 
-    def search_for_playlists(self, name):
-        all_playlists = self.get_playlists()
-        return [playlist for playlist in all_playlists if name.lower() in playlist['name'].lower()]
-
-    # TODO: Refactor
-    def select_playlist(self):
+    def search_for_playlists(self):
         search_query = input('Search for playlist: ')
-        matched_playlists = self.search_for_playlists(search_query)
+        all_playlists = self.get_playlists()
+        return [playlist for playlist in all_playlists if search_query.lower() in playlist['name'].lower()]
 
+    def print_playlist_options(self, playlists):
+        for index, playlist in enumerate(playlists):
+            name = playlist['name']
+            print(f'{index + 1}: {name}')
+        print('s: search again')
+
+    def get_playlist_selection(self, playlists):
         selected_index = -1
         valid = False
         while not valid:
-            for index, matched in enumerate(matched_playlists):
-                name = matched['name']
-                print(f'{index + 1}: {name}')
-
-            print('s: search again')
             user_input = input('Select playlist: ')
-
             if user_input == 's':
-                search_query = input('Search for playlist: ')
-                matched_playlists = self.search_for_playlists(search_query)
+                playlists = self.search_for_playlists()
+                self.print_playlist_options(playlists)
             else:
-                try:
-                    selected_index = int(user_input) - 1
-                    valid = selected_index >= 0 and selected_index < len(matched_playlists)
-                except ValueError:
-                    valid = False
+                selected_index = self.parse_input(user_input) - 1
+                min = 0
+                max = len(playlists)
+                valid = self.validate_playlist_selection(selected_index, min, max)
+        return selected_index
 
-        selected_playlist = Playlist(matched_playlists[selected_index]['id'], matched_playlists[selected_index]['name'])
-        return selected_playlist
+    def select_playlist(self):
+        playlists = self.search_for_playlists()
+        self.print_playlist_options(playlists)
+        selected_index = self.get_playlist_selection(playlists)
+        id = playlists[selected_index]['id']
+        name = playlists[selected_index]['name']
+        return Playlist(id, name)
+
+    def parse_input(self, selection):
+        try:
+            return int(selection)
+        except ValueError:
+            return -1
+
+    def validate_playlist_selection(self, selection, min, max):
+        return selection >= min and selection < max
 
     def add_tracks_to_spotify(self, tracks):
         playlist = self.select_playlist()
