@@ -166,16 +166,30 @@ class LocalToSpotify:
         all_playlists = self.get_playlists()
         return [playlist for playlist in all_playlists if name.lower() in playlist['name'].lower()]
 
+    # TODO: Refactor
     def select_playlist(self):
         search_query = input('Search for playlist: ')
         matched_playlists = self.search_for_playlists(search_query)
-        for index, matched in enumerate(matched_playlists):
-            name = matched['name']
-            print(f'{index + 1}: {name}')
 
-        # TODO: Allow searching multiple times
-        # TODO: Validation
-        selected_index = int(input('Select playlist: ')) - 1
+        selected_index = -1
+        valid = False
+        while not valid:
+            for index, matched in enumerate(matched_playlists):
+                name = matched['name']
+                print(f'{index + 1}: {name}')
+
+            print('s: search again')
+            user_input = input('Select playlist: ')
+            if user_input == 's':
+                search_query = input('Search for playlist: ')
+                matched_playlists = self.search_for_playlists(search_query)
+            else:
+                try:
+                    selected_index = int(user_input) - 1
+                    valid = selected_index >= 0 and selected_index < len(matched_playlists)
+                except ValueError:
+                    valid = False
+
         playlist = Playlist(matched_playlists[selected_index]['id'], matched_playlists[selected_index]['name'])
         return playlist
 
