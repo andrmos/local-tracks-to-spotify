@@ -121,7 +121,6 @@ class LocalToSpotify:
                 print(f'Playlist with id: {playlist_id} was not found')
             return False
 
-    # TODO: Playlist id in config or create new playlist.
     def add_tracks_to_playlist(self, playlist_id, track):
         if self.track_in_playlist(track, playlist_id):
             print(f'{track} already in playlist')
@@ -130,9 +129,35 @@ class LocalToSpotify:
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
             return True
 
-        except SpotifyException as error:
-            print(error)
-            # TODO: If playlist not found, create it?
+        except SpotifyException as e:
+            print(e)
+            return False
+
+    def get_playlists(self):
+        result = self.spotify.user_playlists(self.user_id)
+        playlists = result['items']
+        while result['next']:
+            result = self.spotify.next(result)
+            playlists.extend(result['items'])
+        return playlists
+
+
+    def playlist_exist(self, playlist_to_search):
+        try:
+            spotify_playlists = self.get_playlists()
+            playlists = [Playlist(playlist['id'], playlist['name']) for playlist in spotify_playlists]
+            playlist_ids = [playlist.id for playlist in playlists]
+
+            if playlist_to_search.id in playlist_ids:
+                print(f'Playlist "{playlist_to_search}" found')
+                return True
+            else:
+                print(f'Playlist "{playlist_to_search}" not found')
+                return False
+
+        except SpotifyException as e:
+            print(e)
+            return False
 
     def add_tracks_to_spotify(self, tracks):
         for track in tracks:
@@ -143,12 +168,19 @@ class LocalToSpotify:
                 spotify_track = self.find_track(cleaned_track)
 
             if spotify_track is not None:
-                playlist_id = '6u8zVlsX9YTnaOfmdAaTNR'
-                success = self.add_tracks_to_playlist(playlist_id, spotify_track)
-                if success:
-                    self.added_tracks.append(spotify_track)
+                # TODO: Select playlist
+                playlist = Playlist('6u8zVlsX9YTnaOfmdAaTNR', "jalla")
+                if self.playlist_exist(playlist):
+                    success = self.add_tracks_to_playlist(playlist.id, spotify_track)
+                    if success:
+                        self.added_tracks.append(spotify_track)
+                    else:
+                        self.failed_tracks.append(spotify_track)
                 else:
-                    self.failed_tracks.append(spotify_track)
+                    # TODO: Create playlist.
+                    print('Exiting...')
+                    sys.exit()
+
             else:
                 self.failed_tracks.append(track)
 
