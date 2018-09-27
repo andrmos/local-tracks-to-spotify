@@ -33,52 +33,65 @@ class LocalToSpotify:
     def find_track(self, track):
         search_string = f'{track.artists} {track.title}'
         results = self.spotify.search(q=search_string)
-        spotify_tracks = results['tracks']['items']
-        number_of_tracks = len(spotify_tracks)
+        tracks = [self.convert_to_object(track) for track in results['tracks']['items']]
+        number_of_tracks = len(tracks)
 
         if number_of_tracks == 0:
             return None
         elif number_of_tracks == 1:
-            return self.select_first_track(spotify_tracks)
+            return self.select_first_track(tracks)
+        elif self.are_identical(tracks):
+            return self.select_first_track(tracks)
         else:
             print(f'Found {number_of_tracks} tracks for "{track}".')
             print('Select correct track:')
-            return self.select_correct_track(spotify_tracks)
+            return self.select_correct_track(tracks)
 
-    def select_first_track(self, spotify_tracks):
-        return self.convert_to_object(spotify_tracks[0])
+    def are_identical(self, tracks):
+        isrcs = [track.isrc for track in tracks]
+        if '' in isrcs:
+            # TODO: Check if same title and artists if no isrc?
+            return False
+        else:
+            return len(set(isrcs)) == 1
 
-    def select_correct_track(self, spotify_tracks):
-        self.print_possible_tracks(spotify_tracks)
-        return self.get_track_selection(spotify_tracks)
+    def select_first_track(self, tracks):
+        return tracks[0]
 
-    def print_possible_tracks(self, spotify_tracks):
-        for index, spotify_track in enumerate(spotify_tracks):
-            track = self.convert_to_object(spotify_track)
+    def select_correct_track(self, tracks):
+        self.print_possible_tracks(tracks)
+        return self.get_track_selection(tracks)
+
+    def print_possible_tracks(self, tracks):
+        for index, track in enumerate(tracks):
             print(f'{index + 1}: {track}')
 
-    def get_track_selection(self, spotify_tracks):
+    def get_track_selection(self, tracks):
         input_text = 'Select correct track: '
         valid = False
         selected_track_index = -1
         while not valid:
             try:
                 selected_track_index = int(input(input_text)) - 1
-                if selected_track_index >= 0 and selected_track_index < len(spotify_tracks):
+                if selected_track_index >= 0 and selected_track_index < len(tracks):
                     valid = True
                 else:
                     raise ValueError
             except ValueError:
                 print('Invalid number')
 
-        selected_track = self.convert_to_object(spotify_tracks[selected_track_index])
-        return selected_track
+        return tracks[selected_track_index]
 
     def convert_to_object(self, spotify_track):
         id = spotify_track['id']
         track_title = spotify_track['name']
         artists = ', '.join([artist['name'] for artist in spotify_track['artists']])
-        return Track(id, track_title, artists)
+        isrc = ''
+        try:
+            isrc = spotify_track['external_ids']['isrc']
+        except KeyError:
+            pass
+        return Track(id, track_title, artists, isrc)
 
     def authorize(self):
         scope = 'playlist-modify-public playlist-modify-private playlist-read-private'
@@ -296,10 +309,9 @@ class LocalToSpotify:
         print()
         self.print_statistics()
 
-
 if __name__ == '__main__':
-    path = './tracks'
     mixxxExportReader = MixxxExportReader()
+    path = mixxxExportReader.get_path(sys.argv)
     tracks_to_import = mixxxExportReader.get_tracks_in_folder(path)
 
     localToSpotify = LocalToSpotify('config.ini')
