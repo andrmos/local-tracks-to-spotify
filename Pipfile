@@ -9,7 +9,6 @@ start = "python LocalToSpotify.py"
 [packages]
 spotipy = "*"
 tinytag = "*"
-strsim = "*"
 
 [dev-packages]
 
