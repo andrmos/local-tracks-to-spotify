@@ -23,6 +23,7 @@ def timing(f):
 class LocalToSpotify:
     def __init__(self, config_file_name):
         self.read_config(config_file_name)
+        self.tracks_to_add = []
         self.spotify = self.authorize()
         self.added_tracks = []
         self.tracks_already_in_playlist = []
@@ -166,21 +167,29 @@ class LocalToSpotify:
             return False
 
     @timing
-    def add_tracks_to_playlist(self, playlist_id, track):
-        if self.track_in_playlist(track, playlist_id):
-            self.tracks_already_in_playlist.append(track)
-            # TODO: Remove return
-            return False
+    def add_tracks_to_playlist(self, playlist_id, tracks):
+        # TODO: Add again, is cheap
+        #  if self.track_in_playlist(track, playlist_id):
+            #  self.tracks_already_in_playlist.append(track)
+            #  return False
         try:
-            self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
-            self.added_tracks.append(track)
-            self.playlist_tracks.append(track)
+            #  self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, test_ids)
+            track_ids = [track.id for track in tracks]
+            self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
+            self.added_tracks.extend(tracks)
+            self.playlist_tracks.extend(tracks)
+            #  self.added_tracks.append(track)
+            #  self.playlist_tracks.append(track)
+
+            # TODO: remove return values, not used
             return True
 
         except SpotifyException as e:
             print(e)
             # Reason: Couldn't add to playlist
-            self.failed_tracks.append(spotify_track)
+            #  self.failed_tracks.append(track)
+            # TODO: Figure out how to solve
+            self.failed_tracks.extend(tracks)
             return False
 
 
@@ -313,12 +322,17 @@ class LocalToSpotify:
 
             if spotify_track is not None:
                 # TODO: Remove return
-                success = self.add_tracks_to_playlist(playlist.id, spotify_track)
+                # Comma separated, max 100.
+                # Should be sent in body, not as query param, as to not exceed max URI length
+                # Use spotify uri strings in body.
+                self.tracks_to_add.append(spotify_track)
+                #  success = self.add_tracks_to_playlist(playlist.id, spotify_track)
 
             else:
                 # Reason: Not found
                 self.failed_tracks.append(track)
 
+        self.add_tracks_to_playlist(playlist.id, self.tracks_to_add)
         self.print_summary()
 
     def print_already_in_playlist(self):
