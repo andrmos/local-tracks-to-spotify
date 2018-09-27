@@ -23,6 +23,7 @@ def timing(f):
 class LocalToSpotify:
     def __init__(self, config_file_name):
         self.read_config(config_file_name)
+        self.tracks_to_add = []
         self.spotify = self.authorize()
         self.added_tracks = []
         self.tracks_already_in_playlist = []
@@ -165,24 +166,27 @@ class LocalToSpotify:
                 print(f'Playlist with id: {playlist_id} was not found')
             return False
 
-    @timing
-    def add_tracks_to_playlist(self, playlist_id, track):
-        if self.track_in_playlist(track, playlist_id):
-            self.tracks_already_in_playlist.append(track)
-            # TODO: Remove return
-            return False
+    def add_tracks_to_playlist(self, playlist_id, tracks):
         try:
-            self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
-            self.added_tracks.append(track)
-            self.playlist_tracks.append(track)
-            return True
+            while len(tracks) != 0:
+                batch = []
+                for num in range(0, 100):
+                    if len(tracks) == 0:
+                        break
+                    track_to_add = tracks.pop()
+                    if self.track_in_playlist(track_to_add, playlist_id):
+                        self.tracks_already_in_playlist.append(track_to_add)
+                    else:
+                        batch.append(track_to_add.id)
+                        self.added_tracks.append(track_to_add)
+                        self.playlist_tracks.append(track_to_add)
+                if len(batch) > 0:
+                    self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, batch)
 
         except SpotifyException as e:
             print(e)
             # Reason: Couldn't add to playlist
-            self.failed_tracks.append(spotify_track)
-            return False
-
+            self.failed_tracks.extend(tracks)
 
     def get_playlists(self):
         try:
@@ -268,6 +272,7 @@ class LocalToSpotify:
         result = self.spotify.user_playlist_create(self.user_id, playlist_name, public = is_public)
         created_playlist = Playlist(result['id'], result['name'])
         # TODO: Store playlist object instead
+        # TODO: Does not work when creating new playlist
         self.playlists.append(result)
         return created_playlist
 
@@ -312,13 +317,12 @@ class LocalToSpotify:
                 spotify_track = self.clean_track_metadata_and_find_again(track)
 
             if spotify_track is not None:
-                # TODO: Remove return
-                success = self.add_tracks_to_playlist(playlist.id, spotify_track)
-
+                self.tracks_to_add.append(spotify_track)
             else:
                 # Reason: Not found
                 self.failed_tracks.append(track)
 
+        self.add_tracks_to_playlist(playlist.id, self.tracks_to_add)
         self.print_summary()
 
     def print_already_in_playlist(self):
