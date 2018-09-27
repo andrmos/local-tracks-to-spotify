@@ -174,8 +174,19 @@ class LocalToSpotify:
             #  return False
         try:
             #  self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, test_ids)
-            track_ids = [track.id for track in tracks]
-            self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
+            track_ids = set(track.id for track in tracks)
+            while len(track_ids) != 0:
+                batch = []
+                for num in range(0, 100):
+                    if len(track_ids) == 0:
+                        break
+                    batch.append(track_ids.pop())
+                self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, batch)
+
+
+
+            # TODO: can only add 100 ids at a time
+            #  self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
             self.added_tracks.extend(tracks)
             self.playlist_tracks.extend(tracks)
             #  self.added_tracks.append(track)
