@@ -4,6 +4,7 @@ import spotipy
 import spotipy.util
 from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
+from similarity.jarowinkler import JaroWinkler
 from MixxxExportReader import *
 from Track import *
 from Playlist import *
