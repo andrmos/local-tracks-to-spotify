@@ -1,8 +1,9 @@
 class Track:
-    def __init__(self, id, title, artists):
+    def __init__(self, id, title, artists, isrc = ''):
         self.id = id
         self.title = title
         self.artists = artists
+        self.isrc = isrc
 
     def clean_track(self):
         self.remove_general_artist_words()

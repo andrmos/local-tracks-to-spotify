@@ -78,7 +78,12 @@ class LocalToSpotify:
         id = spotify_track['id']
         track_title = spotify_track['name']
         artists = ', '.join([artist['name'] for artist in spotify_track['artists']])
-        return Track(id, track_title, artists)
+        isrc = ''
+        try:
+            isrc = spotify_track['external_ids']['isrc']
+        except KeyError:
+            pass
+        return Track(id, track_title, artists, isrc)
 
     def authorize(self):
         scope = 'playlist-modify-public playlist-modify-private playlist-read-private'
