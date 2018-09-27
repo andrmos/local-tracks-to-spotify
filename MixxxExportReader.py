@@ -31,3 +31,9 @@ class MixxxExportReader:
 
     def remove_parens(self, string):
         return string.strip().replace('(', '').replace(')', '').lower()
+
+    def get_path(self, argv):
+        if len(argv) < 2:
+            return input('Specify path of track files: ')
+        else:
+            return argv[1]

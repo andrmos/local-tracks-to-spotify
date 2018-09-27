@@ -296,10 +296,9 @@ class LocalToSpotify:
         print()
         self.print_statistics()
 
-
 if __name__ == '__main__':
-    path = './tracks'
     mixxxExportReader = MixxxExportReader()
+    path = mixxxExportReader.get_path(sys.argv)
     tracks_to_import = mixxxExportReader.get_tracks_in_folder(path)
 
     localToSpotify = LocalToSpotify('config.ini')
