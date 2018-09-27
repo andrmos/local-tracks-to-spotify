@@ -43,9 +43,32 @@ class LocalToSpotify:
         elif self.are_identical(tracks):
             return self.select_first_track(tracks)
         else:
-            print(f'Found {number_of_tracks} tracks for "{track}".')
-            print('Select correct track:')
-            return self.select_correct_track(tracks)
+            best_match = self.best_match(track, tracks)
+            if best_match != None:
+                return best_match
+            else:
+                print(f'Found {number_of_tracks} tracks for "{track}".')
+                print('Select correct track:')
+                return self.select_correct_track(tracks)
+
+    def best_match(self, search_track, tracks):
+        jw = JaroWinkler()
+        title_similarities = []
+        artists_similarities = []
+        totals = []
+        for track in tracks:
+            title_similarity = jw.similarity(search_track.title.lower(), track.title.lower())
+            title_similarities.append(title_similarity)
+            artists_similarity = jw.similarity(search_track.artists.lower(), track.artists.lower())
+            artists_similarities.append(artists_similarity)
+            totals.append(artists_similarity + title_similarity)
+
+        max_index = totals.index(max(totals))
+        max_total = totals[max_index]
+        if max_total > 1.5:
+            return tracks[max_index]
+        else:
+            return None
 
     def are_identical(self, tracks):
         isrcs = [track.isrc for track in tracks]
