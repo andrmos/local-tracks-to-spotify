@@ -167,7 +167,7 @@ class LocalToSpotify:
         except SpotifyException as e:
             print(e)
             # Reason: Couldn't add to playlist
-            self.failed_tracks.append(spotify_track)
+            self.failed_tracks.append(track)
             return False
 
 
