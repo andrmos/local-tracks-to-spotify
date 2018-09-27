@@ -166,31 +166,22 @@ class LocalToSpotify:
                 print(f'Playlist with id: {playlist_id} was not found')
             return False
 
-    @timing
     def add_tracks_to_playlist(self, playlist_id, tracks):
-        # TODO: Add again, is cheap
-        #  if self.track_in_playlist(track, playlist_id):
-            #  self.tracks_already_in_playlist.append(track)
-            #  return False
         try:
-            #  self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, test_ids)
-            track_ids = set(track.id for track in tracks)
-            while len(track_ids) != 0:
+            while len(tracks) != 0:
                 batch = []
                 for num in range(0, 100):
-                    if len(track_ids) == 0:
+                    if len(tracks) == 0:
                         break
-                    batch.append(track_ids.pop())
-                self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, batch)
-
-
-
-            # TODO: can only add 100 ids at a time
-            #  self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, track_ids)
-            self.added_tracks.extend(tracks)
-            self.playlist_tracks.extend(tracks)
-            #  self.added_tracks.append(track)
-            #  self.playlist_tracks.append(track)
+                    track_to_add = tracks.pop()
+                    if self.track_in_playlist(track_to_add, playlist_id):
+                        self.tracks_already_in_playlist.append(track_to_add)
+                    else:
+                        batch.append(track_to_add.id)
+                        self.added_tracks.append(track_to_add)
+                        self.playlist_tracks.append(track_to_add)
+                if len(batch) > 0:
+                    self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, batch)
 
             # TODO: remove return values, not used
             return True
@@ -198,7 +189,6 @@ class LocalToSpotify:
         except SpotifyException as e:
             print(e)
             # Reason: Couldn't add to playlist
-            #  self.failed_tracks.append(track)
             # TODO: Figure out how to solve
             self.failed_tracks.extend(tracks)
             return False
