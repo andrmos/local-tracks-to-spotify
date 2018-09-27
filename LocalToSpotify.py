@@ -4,6 +4,7 @@ import spotipy
 import spotipy.util
 from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
+from similarity.jarowinkler import JaroWinkler
 from MixxxExportReader import *
 from Track import *
 from Playlist import *
@@ -43,9 +44,33 @@ class LocalToSpotify:
         elif self.are_identical(tracks):
             return self.select_first_track(tracks)
         else:
-            print(f'Found {number_of_tracks} tracks for "{track}".')
-            print('Select correct track:')
-            return self.select_correct_track(tracks)
+            chosen = self.test_string_similarity(track, tracks)
+            if chosen != None:
+                return chosen
+            else:
+                print(f'Found {number_of_tracks} tracks for "{track}".')
+                print('Select correct track:')
+                return self.select_correct_track(tracks)
+
+    def test_string_similarity(self, search_track, tracks):
+        jw = JaroWinkler()
+        title_similarities = []
+        artists_similarities = []
+        totals = []
+        for track in tracks:
+            title_similarity = jw.similarity(search_track.title, track.title)
+            title_similarities.append(title_similarity)
+            artists_similarity = jw.similarity(search_track.artists, track.artists)
+            artists_similarities.append(artists_similarity)
+            totals.append(artists_similarity + title_similarity)
+
+        max_index = totals.index(max(totals))
+        max_total = totals[max_index]
+        if max_total > 1.5:
+            print(f'{totals[max_index]}: {tracks[max_index]}')
+            return tracks[max_index]
+        else:
+            return None
 
     def are_identical(self, tracks):
         isrcs = [track.isrc for track in tracks]
