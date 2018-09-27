@@ -2,12 +2,23 @@ import sys
 import configparser
 import spotipy
 import spotipy.util
+import time
 from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
 from similarity.jarowinkler import JaroWinkler
 from MixxxExportReader import *
 from Track import *
 from Playlist import *
+
+def timing(f):
+    def wrap(*args):
+        time1 = time.time()
+        ret = f(*args)
+        time2 = time.time()
+        print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
+
+        return ret
+    return wrap
 
 class LocalToSpotify:
     def __init__(self, config_file_name):
@@ -154,9 +165,11 @@ class LocalToSpotify:
                 print(f'Playlist with id: {playlist_id} was not found')
             return False
 
+    @timing
     def add_tracks_to_playlist(self, playlist_id, track):
         if self.track_in_playlist(track, playlist_id):
             self.tracks_already_in_playlist.append(track)
+            # TODO: Remove return
             return False
         try:
             self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, [track.id])
@@ -299,6 +312,7 @@ class LocalToSpotify:
                 spotify_track = self.clean_track_metadata_and_find_again(track)
 
             if spotify_track is not None:
+                # TODO: Remove return
                 success = self.add_tracks_to_playlist(playlist.id, spotify_track)
 
             else:
