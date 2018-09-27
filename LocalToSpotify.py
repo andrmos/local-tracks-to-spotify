@@ -183,16 +183,10 @@ class LocalToSpotify:
                 if len(batch) > 0:
                     self.spotify.user_playlist_add_tracks(self.user_id, playlist_id, batch)
 
-            # TODO: remove return values, not used
-            return True
-
         except SpotifyException as e:
             print(e)
             # Reason: Couldn't add to playlist
-            # TODO: Figure out how to solve
             self.failed_tracks.extend(tracks)
-            return False
-
 
     def get_playlists(self):
         try:
@@ -278,6 +272,7 @@ class LocalToSpotify:
         result = self.spotify.user_playlist_create(self.user_id, playlist_name, public = is_public)
         created_playlist = Playlist(result['id'], result['name'])
         # TODO: Store playlist object instead
+        # TODO: Does not work when creating new playlist
         self.playlists.append(result)
         return created_playlist
 
@@ -322,13 +317,7 @@ class LocalToSpotify:
                 spotify_track = self.clean_track_metadata_and_find_again(track)
 
             if spotify_track is not None:
-                # TODO: Remove return
-                # Comma separated, max 100.
-                # Should be sent in body, not as query param, as to not exceed max URI length
-                # Use spotify uri strings in body.
                 self.tracks_to_add.append(spotify_track)
-                #  success = self.add_tracks_to_playlist(playlist.id, spotify_track)
-
             else:
                 # Reason: Not found
                 self.failed_tracks.append(track)
