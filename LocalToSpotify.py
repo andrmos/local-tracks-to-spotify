@@ -58,16 +58,15 @@ class LocalToSpotify:
         artists_similarities = []
         totals = []
         for track in tracks:
-            title_similarity = jw.similarity(search_track.title, track.title)
+            title_similarity = jw.similarity(search_track.title.lower(), track.title.lower())
             title_similarities.append(title_similarity)
-            artists_similarity = jw.similarity(search_track.artists, track.artists)
+            artists_similarity = jw.similarity(search_track.artists.lower(), track.artists.lower())
             artists_similarities.append(artists_similarity)
             totals.append(artists_similarity + title_similarity)
 
         max_index = totals.index(max(totals))
         max_total = totals[max_index]
         if max_total > 1.5:
-            print(f'{totals[max_index]}: {tracks[max_index]}')
             return tracks[max_index]
         else:
             return None
