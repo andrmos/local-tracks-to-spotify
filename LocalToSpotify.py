@@ -4,7 +4,6 @@ import spotipy
 import spotipy.util
 from spotipy.client import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
-from similarity.jarowinkler import JaroWinkler
 from MixxxExportReader import *
 from Track import *
 from Playlist import *
@@ -167,7 +166,7 @@ class LocalToSpotify:
         except SpotifyException as e:
             print(e)
             # Reason: Couldn't add to playlist
-            self.failed_tracks.append(track)
+            self.failed_tracks.append(spotify_track)
             return False
 
 
