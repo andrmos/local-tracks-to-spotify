@@ -44,15 +44,15 @@ class LocalToSpotify:
         elif self.are_identical(tracks):
             return self.select_first_track(tracks)
         else:
-            chosen = self.test_string_similarity(track, tracks)
-            if chosen != None:
-                return chosen
+            best_match = self.best_match(track, tracks)
+            if best_match != None:
+                return best_match
             else:
                 print(f'Found {number_of_tracks} tracks for "{track}".')
                 print('Select correct track:')
                 return self.select_correct_track(tracks)
 
-    def test_string_similarity(self, search_track, tracks):
+    def best_match(self, search_track, tracks):
         jw = JaroWinkler()
         title_similarities = []
         artists_similarities = []
