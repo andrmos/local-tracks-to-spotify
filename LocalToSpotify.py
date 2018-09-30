@@ -9,6 +9,7 @@ from similarity.jarowinkler import JaroWinkler
 from MixxxExportReader import *
 from Track import *
 from Playlist import *
+from multiprocessing.dummy import Pool as ThreadPool
 
 def timing(f):
     def wrap(*args):
@@ -310,20 +311,24 @@ class LocalToSpotify:
         playlist_tracks = self.get_playlist_tracks(playlist.id)
         self.store_playlist_tracks(playlist_tracks)
 
-        for track in tracks_to_add:
-            spotify_track = self.find_track(track)
-            not_found = spotify_track is None
-            if not_found:
-                spotify_track = self.clean_track_metadata_and_find_again(track)
+        pool = ThreadPool(4)
+        # TODO: self.find_track cannot return None. Will crash.
+        test_result = pool.map(self.find_track, tracks_to_add)
 
-            if spotify_track is not None:
-                self.tracks_to_add.append(spotify_track)
-            else:
-                # Reason: Not found
-                self.failed_tracks.append(track)
+        #  for track in tracks_to_add:
+            #  spotify_track = self.find_track(track)
+            #  not_found = spotify_track is None
+            #  if not_found:
+                #  spotify_track = self.clean_track_metadata_and_find_again(track)
 
-        self.add_tracks_to_playlist(playlist.id, self.tracks_to_add)
-        self.print_summary()
+            #  if spotify_track is not None:
+                #  self.tracks_to_add.append(spotify_track)
+            #  else:
+                #  # Reason: Not found
+                #  self.failed_tracks.append(track)
+
+        #  self.add_tracks_to_playlist(playlist.id, self.tracks_to_add)
+        #  self.print_summary()
 
     def print_already_in_playlist(self):
         for track in self.tracks_already_in_playlist:
