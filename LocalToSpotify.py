@@ -314,21 +314,31 @@ class LocalToSpotify:
         pool = ThreadPool(4)
         # TODO: self.find_track cannot return None. Will crash.
         test_result = pool.map(self.find_track, tracks_to_add)
+        pool.close()
+        pool.join()
+
+        print(test_result)
+
+        # TODO: Wait for done
 
         #  for track in tracks_to_add:
+        for track in test_result:
             #  spotify_track = self.find_track(track)
             #  not_found = spotify_track is None
-            #  if not_found:
-                #  spotify_track = self.clean_track_metadata_and_find_again(track)
+            #  print(track)
 
-            #  if spotify_track is not None:
-                #  self.tracks_to_add.append(spotify_track)
-            #  else:
-                #  # Reason: Not found
-                #  self.failed_tracks.append(track)
+            not_found = track is None
+            if not_found:
+                spotify_track = self.clean_track_metadata_and_find_again(track)
 
-        #  self.add_tracks_to_playlist(playlist.id, self.tracks_to_add)
-        #  self.print_summary()
+            if spotify_track is not None:
+                self.tracks_to_add.append(spotify_track)
+            else:
+                # Reason: Not found
+                self.failed_tracks.append(track)
+
+        self.add_tracks_to_playlist(playlist.id, self.tracks_to_add)
+        self.print_summary()
 
     def print_already_in_playlist(self):
         for track in self.tracks_already_in_playlist:
