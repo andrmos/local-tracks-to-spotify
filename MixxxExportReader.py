@@ -4,18 +4,18 @@ from LocalToSpotify import Track
 from tinytag import TinyTag
 
 class MixxxExportReader:
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        self.path = path
 
-    def get_tracks_to_import(self, path):
-        if path.endswith('.csv'):
-            return self.get_tracks_from_csv(path)
+    def get_tracks_to_import(self):
+        if self.path.endswith('.csv'):
+            return self.get_tracks_from_csv()
         else:
-            return self.get_tracks_in_folder(path)
+            return self.get_tracks_in_folder()
 
-    def get_tracks_from_csv(self, file):
+    def get_tracks_from_csv(self):
         tracks = []
-        with open(file, 'r') as csvfile:
+        with open(self.path, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 title = self.remove_parens(row['Title'])
@@ -23,8 +23,8 @@ class MixxxExportReader:
                 tracks.append(Track(-1, title, artists))
         return tracks
 
-    def get_tracks_in_folder(self, path):
-        with os.scandir(path) as it:
+    def get_tracks_in_folder(self):
+        with os.scandir(self.path) as it:
             tracks = []
             for entry in it:
                 if entry.is_file():
@@ -45,12 +45,5 @@ class MixxxExportReader:
             print(f'Parsing failed for file: {file}')
             print(error)
 
-
     def remove_parens(self, string):
         return string.strip().replace('(', '').replace(')', '').lower()
-
-    def get_path(self, argv):
-        if len(argv) < 2:
-            return input('Specify path of track files: ')
-        else:
-            return argv[1]
