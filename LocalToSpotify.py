@@ -351,10 +351,16 @@ class LocalToSpotify:
         print()
         self.print_statistics()
 
+def get_path(argv):
+    if len(argv) < 2:
+        return input('Specify path of track files: ')
+    else:
+        return argv[1]
+
 if __name__ == '__main__':
-    mixxxExportReader = MixxxExportReader()
-    path = mixxxExportReader.get_path(sys.argv)
-    tracks_to_import = mixxxExportReader.get_tracks_in_folder(path)
+    path = get_path(sys.argv)
+    mixxxExportReader = MixxxExportReader(path)
+    tracks_to_import = mixxxExportReader.get_tracks_to_import()
 
     localToSpotify = LocalToSpotify('config.ini')
     localToSpotify.add_tracks_to_spotify(tracks_to_import)
