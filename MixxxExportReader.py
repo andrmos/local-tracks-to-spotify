@@ -1,9 +1,19 @@
 import os
+import csv
 from LocalToSpotify import Track
 from tinytag import TinyTag
 
 class MixxxExportReader:
     def __init__(self):
+        pass
+
+    def get_tracks_to_import(self, path):
+        if path.endswith('.csv'):
+            return get_tracks_from_csv(path)
+        else:
+            return self.get_tracks_in_folder(path)
+
+    def get_tracks_from_csv(self, file):
         pass
 
     def get_tracks_in_folder(self, path):

@@ -354,7 +354,7 @@ class LocalToSpotify:
 if __name__ == '__main__':
     mixxxExportReader = MixxxExportReader()
     path = mixxxExportReader.get_path(sys.argv)
-    tracks_to_import = mixxxExportReader.get_tracks_in_folder(path)
+    tracks_to_import = mixxxExportReader.get_tracks_to_import(path)
 
     localToSpotify = LocalToSpotify('config.ini')
     localToSpotify.add_tracks_to_spotify(tracks_to_import)
