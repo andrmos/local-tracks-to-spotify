@@ -9,12 +9,19 @@ class MixxxExportReader:
 
     def get_tracks_to_import(self, path):
         if path.endswith('.csv'):
-            return get_tracks_from_csv(path)
+            return self.get_tracks_from_csv(path)
         else:
             return self.get_tracks_in_folder(path)
 
     def get_tracks_from_csv(self, file):
-        pass
+        tracks = []
+        with open(file, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                title = self.remove_parens(row['Title'])
+                artists = self.remove_parens(row['Artist'])
+                tracks.append(Track(-1, title, artists))
+        return tracks
 
     def get_tracks_in_folder(self, path):
         with os.scandir(path) as it:
